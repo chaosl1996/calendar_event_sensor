@@ -1,0 +1,7 @@
+{
+  "name": "Calendar Event Sensor",
+  "filename": "calendar_event_sensor.zip",
+  "hide_default_branch": true,
+  "homeassistant": "2023.1.0",
+  "render_readme": true
+}

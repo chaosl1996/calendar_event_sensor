@@ -1,0 +1,10 @@
+{
+  "domain": "calendar_event_sensor",
+  "name": "Calendar Event Sensor",
+  "version": "0.1.0",
+  "documentation": "https://example.com/docs",
+  "requirements": [],
+  "dependencies": ["calendar"],
+  "codeowners": ["@chaosl1996"],
+  "config_flow": true
+}
