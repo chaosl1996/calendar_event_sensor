@@ -114,7 +114,7 @@ class CalendarEventSensor(SensorEntity):
         chinese_numbers = {1: "一", 2: "二", 3: "三", 4: "四", 5: "五",
                           6: "六", 7: "七", 8: "八", 9: "九", 10: "十"}
         number_str = chinese_numbers.get(index, str(index))
-        self._attr_name = f"未来第{number_str}{integration_name}个"
+        self._attr_name = f"未来第{number_str}个{integration_name}"
 
     async def async_added_to_hass(self):
         """当传感器添加到HASS时。"""
