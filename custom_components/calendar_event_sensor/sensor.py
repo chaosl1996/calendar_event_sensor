@@ -3,6 +3,7 @@ Calendar Event Sensor 集成的传感器实现
 """
 import datetime
 import logging
+import math
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntryNotReady
 from homeassistant.core import HomeAssistant, callback
@@ -157,11 +158,16 @@ class CalendarEventSensor(SensorEntity):
         # 计算倒计时
         if start_time:
             try:
-                start_datetime = datetime.datetime.strptime(start_time, "%Y-%m-%d")
+                # 尝试解析包含时分秒的格式
+                if 'T' in start_time:
+                    start_datetime = datetime.datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
+                else:
+                    start_datetime = datetime.datetime.strptime(start_time, "%Y-%m-%d")
                 start_datetime = start_datetime.replace(tzinfo=datetime.timezone.utc)
                 now = utcnow()
                 countdown = (start_datetime - now).total_seconds()
-                countdown_days = max(0, int(countdown / 86400))
+                # 使用向上取整确保超过2天1分钟就算3天
+                countdown_days = max(0, math.ceil(countdown / 86400))
             except ValueError:
                 countdown_days = None
         else:
