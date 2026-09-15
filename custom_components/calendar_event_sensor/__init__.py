@@ -1,8 +1,10 @@
 """
 Calendar Event Sensor 集成的主入口文件
 """
+import asyncio
 import logging
 from homeassistant.config_entries import ConfigEntryNotReady
+from homeassistant.helpers.event import async_track_state_added_domain
 from .const import DOMAIN, PLATFORMS, CONF_CALENDAR_ENTITY
 
 _LOGGER = logging.getLogger(__name__)
@@ -15,11 +17,20 @@ async def async_setup(hass, config):
 async def async_setup_entry(hass, entry):
     """从配置项设置集成。"""
     calendar_entity = entry.data[CONF_CALENDAR_ENTITY]
-    
-    # 检查日历实体是否存在且可用
+
+    # 日历实体由 remote_calendar/local_calendar 等集成在启动后期注册，
+    # 等待其出现（最多 120s）而不是立即报错，消除重启时的启动顺序竞态
     if calendar_entity not in hass.states.async_entity_ids("calendar"):
-        _LOGGER.error("日历实体 %s 不存在或不可用", calendar_entity)
-        raise ConfigEntryNotReady(f"日历实体 {calendar_entity} 不存在或不可用")
+        _LOGGER.info("等待日历实体 %s 出现…", calendar_entity)
+        ready = asyncio.Event()
+        remove = async_track_state_added_domain(hass, ["calendar"], lambda _ev: ready.set())
+        try:
+            await asyncio.wait_for(ready.wait(), timeout=120)
+        except asyncio.TimeoutError:
+            remove()
+            _LOGGER.warning("等待日历实体 %s 超时", calendar_entity)
+            raise ConfigEntryNotReady(f"日历实体 {calendar_entity} 不存在或不可用")
+        remove()
     
     hass.data[DOMAIN][entry.entry_id] = entry.data
     try:

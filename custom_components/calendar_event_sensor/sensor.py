@@ -29,10 +29,10 @@ async def async_setup_entry(
     if not filter_words and CONF_FILTER_WORD in config_entry.data:
         filter_words = [config_entry.data[CONF_FILTER_WORD]]
 
-    # 检查日历实体是否存在且可用 (移除异常，改为记录日志和返回False)
+    # 检查日历实体（__init__ 已等待其出现；若仍缺失则抛出可重试异常，不再直接失败）
     if calendar_entity not in hass.states.async_entity_ids("calendar"):
-        _LOGGER.error("日历实体 %s 不存在", calendar_entity)
-        return False
+        _LOGGER.warning("日历实体 %s 尚未就绪，稍后自动重试", calendar_entity)
+        raise ConfigEntryNotReady(f"日历实体 {calendar_entity} 尚未就绪")
 
     # 创建协调器
     coordinator = CalendarEventCoordinator(hass, calendar_entity, event_count, filter_words)
@@ -156,6 +156,7 @@ class CalendarEventSensor(SensorEntity):
         end_time = event.get("end", "")
 
         # 计算倒计时
+        countdown_days = None
         if start_time:
             try:
                 # 尝试解析包含时分秒的格式
